@@ -1,0 +1,253 @@
+_DynamicMConditionalFormatting = 
+
+var MeasureValue = 
+    [Sales Amount]
+
+var MeasureMax = 
+    SWITCH (
+
+        TRUE(), 
+
+        -- Values 
+        ISINSCOPE ( 'DimDate'[CalendarYear] ) 
+            && ISINSCOPE ( 'DimSalesTerritory'[SalesTerritoryCountry] ) , 
+        MAXX ( 
+            CROSSJOIN ( 
+                ALLSELECTED ( 'DimDate'[CalendarYear] ) , 
+                ALLSELECTED ( 'DimSalesTerritory'[SalesTerritoryCountry] ) ) , 
+                [Sales Amount] 
+            ) , 
+
+        -- Columns 
+        NOT ( ISINSCOPE ( 'DimDate'[CalendarYear] ) ) 
+            && ISINSCOPE ( 'DimSalesTerritory'[SalesTerritoryCountry] ) , 
+        MAXX ( 
+            ALLSELECTED ( 'DimSalesTerritory'[SalesTerritoryCountry] ) , 
+            [Sales Amount] 
+        ) ,
+
+        -- Customers 
+        ISINSCOPE ( 'DimDate'[CalendarYear] ) 
+            && NOT ( ISINSCOPE ( 'DimSalesTerritory'[SalesTerritoryCountry] ) ) , 
+        MAXX ( 
+            ALLSELECTED ( 'DimDate'[CalendarYear] ) , 
+            [Sales Amount] 
+        )  
+
+    )
+
+var MeasureMin = 
+    SWITCH (
+
+        TRUE(), 
+
+        -- Values 
+        ISINSCOPE ( 'DimDate'[CalendarYear] ) 
+            && ISINSCOPE ( 'DimSalesTerritory'[SalesTerritoryCountry] ) , 
+        MINX ( 
+            CROSSJOIN ( 
+                ALLSELECTED ( 'DimDate'[CalendarYear] ) , 
+                ALLSELECTED ( 'DimSalesTerritory'[SalesTerritoryCountry] ) ) , 
+                [Sales Amount] 
+            ) , 
+
+        -- Columns 
+        NOT ( ISINSCOPE ( 'DimDate'[CalendarYear] ) ) 
+            && ISINSCOPE ( 'DimSalesTerritory'[SalesTerritoryCountry] ) , 
+        MINX ( 
+            ALLSELECTED ( 'DimSalesTerritory'[SalesTerritoryCountry] ) , 
+            [Sales Amount] 
+        ) ,
+
+        -- Customers 
+        ISINSCOPE ( 'DimDate'[CalendarYear] ) 
+            && NOT ( ISINSCOPE ( 'DimSalesTerritory'[SalesTerritoryCountry] ) ) , 
+        MINX ( 
+            ALLSELECTED ( 'DimDate'[CalendarYear] ) , 
+            [Sales Amount] 
+        )  
+
+    )
+
+var RelativeScore = 
+    IF(
+        NOT ( ISBLANK ( MeasureValue ) ) , 
+        DIVIDE(
+            MeasureValue - MeasureMin, 
+            MeasureMax - MeasureMin
+        )
+    )
+
+------------------------------------------------------------------------
+
+var DecimalNumberReference1 = 
+    IF ( 
+        ISINSCOPE ( 'DimDate'[CalendarYear] ) 
+            && ISINSCOPE ( 'DimSalesTerritory'[SalesTerritoryCountry] ) , 
+        90 , 
+        248 
+    )
+
+var DecimalNumberReference2 = 
+    IF ( 
+        ISINSCOPE ( 'DimDate'[CalendarYear] ) 
+            && ISINSCOPE ( 'DimSalesTerritory'[SalesTerritoryCountry] ) , 
+        138 , 
+        105 
+    )
+    
+var DecimalNumberReference3 = 
+    IF ( 
+        ISINSCOPE ( 'DimDate'[CalendarYear] ) 
+            && ISINSCOPE ( 'DimSalesTerritory'[SalesTerritoryCountry] ) , 
+        198 , 
+        107 
+    )
+
+var DecimalNumber1 = 
+    DecimalNumberReference1 
+    + ROUND ( ( 1 - RelativeScore ) * (255 - DecimalNumberReference1) , 0 )
+
+var DecimalNumber2 = 
+    DecimalNumberReference2 
+    + ROUND ( ( 1 - RelativeScore ) * (255 - DecimalNumberReference2) , 0 )
+var DecimalNumber3 = 
+    DecimalNumberReference3 
+    + ROUND ( ( 1 - RelativeScore ) * (255 - DecimalNumberReference3) , 0 )
+
+var Dec2Hex = { 
+    (10, "A"), 
+    (11, "B"), 
+    (12, "C"), 
+    (13, "D"), 
+    (14, "E"), 
+    (15, "F") 
+}
+
+------------------------------------------------------------------------
+
+var Hex1 = 
+    IF(
+        DecimalNumber1 > 0 ,
+            VAR __Table = 
+                ADDCOLUMNS(
+                    ADDCOLUMNS(
+                        GENERATESERIES(
+                            0,
+                            LOG(DecimalNumber1,16),
+                            1
+                        ),
+                        "HexInDecimal",
+                        MOD(TRUNC(DecimalNumber1 / POWER(16,[Value])),16)
+                    ),
+                    "Hex",
+                    IF(
+                        [HexInDecimal] < 10 ,
+                        [HexInDecimal], 
+                        MAXX(
+                            FILTER(
+                                Dec2Hex,
+                                [Value1] = [HexInDecimal]
+                            ),
+                            [Value2]
+                        )
+                    )
+                )
+            VAR v1 = 
+                CONCATENATEX(__Table,[Hex],"",[Value],DESC) 
+            VAR v2 = 
+                IF ( DecimalNumber1 >= 16 , v1 , "0" & v1 )
+            RETURN
+                v2 
+    )
+    
+------------------------------------------------------------------------
+
+var Hex2 = 
+    IF(
+        DecimalNumber2 > 0 ,
+            VAR __Table = 
+                ADDCOLUMNS(
+                    ADDCOLUMNS(
+                        GENERATESERIES(
+                            0,
+                            LOG(DecimalNumber2,16),
+                            1
+                        ),
+                        "HexInDecimal",
+                        MOD(TRUNC(DecimalNumber2 / POWER(16,[Value])),16)
+                    ),
+                    "Hex",
+                    IF(
+                        [HexInDecimal] < 10, 
+                        [HexInDecimal], 
+                        MAXX(
+                            FILTER(
+                                Dec2Hex,
+                                [Value1] = [HexInDecimal]
+                            ),
+                            [Value2]
+                        )
+                    )
+                )
+            VAR v1 = 
+                CONCATENATEX(__Table,[Hex],"",[Value],DESC) 
+            VAR v2 = 
+                IF ( DecimalNumber2 >= 16 , v1 , "0" & v1 )
+            RETURN
+                v2 
+    )
+
+------------------------------------------------------------------------
+
+var Hex3 = 
+    IF(
+        DecimalNumber3 > 0 ,
+            VAR __Table = 
+                ADDCOLUMNS(
+                    ADDCOLUMNS(
+                        GENERATESERIES(
+                            0 ,
+                            LOG ( DecimalNumber3 , 16 ) ,
+                            1 
+                        ) ,
+                        "HexInDecimal",
+                        MOD(TRUNC(DecimalNumber3 / POWER(16,[Value])),16)
+                    ),
+                    "Hex",
+                    IF(
+                        [HexInDecimal] < 10,
+                        [HexInDecimal],
+                        MAXX(
+                            FILTER(
+                                Dec2Hex,
+                                [Value1] = [HexInDecimal]
+                            ),
+                            [Value2]
+                        )
+                    )
+                )
+            VAR v1 = 
+                CONCATENATEX(__Table,[Hex],"",[Value],DESC) 
+            VAR v2 = 
+                IF ( DecimalNumber3 >= 16 , v1 , "0" & v1 )
+            RETURN
+                v2 
+    )
+
+------------------------------------------------------------------------
+
+var Hex = 
+    IF ( 
+        LEN ( Hex1 & Hex2 & Hex3  ) > 0 , 
+        "#" & Hex1 & Hex2 & Hex3 
+    )
+
+------------------------------------------------------------------------
+
+return 
+    Hex
+
+
+
+    
