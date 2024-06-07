@@ -12,7 +12,7 @@ The logic behind the HEX standard is the same as RGB’s, but the display format
  
 The calculations of the measure starts with determining the section of the matrix whose cell is being calculated. It uses ISINSCOPE to differentitate between internal values, row totals or column totals. Then it calculates the maximum and minimum of the current section using CROSSJOIN and ALLSELECTED, and determines the location of the value of the current cell is in the range 0 to 1. The reason for using ALLSELECTED is to take into account the external filters that come from slicers or other visuals. For eliminating the effects of the outer filter context and using slicers just for filtering rows or columns, you can use use ALL instead of ALLSELECTED. The values of the color channels for each of the matrix sections are hardcoded in the measure. The minimum value is always mapped to white, while the maximum is mapped to (90,138,198) for internal cells, and to (248,105,107) for totals. Other values are mapped to intermediate colors. Both colors are taken from Excel’s conditional formatting.
  
-Finally, it is the time to convert the obtained RGB color to HEX since Power BI only accepts HEX. Power BI has no built-in functions for doing so, therefore, I used @GregDeckler’s code available here.
+Finally, it is the time to convert the obtained RGB color to HEX since Power BI only accepts HEX. Power BI has no built-in functions for doing so, therefore, I used Greg Deckler’s code available here.
  
 https://community.fabric.microsoft.com/t5/Quick-Measures-Gallery/DEC2HEX-Decimal-to-Hexadecimal/m-p/1062151
  
